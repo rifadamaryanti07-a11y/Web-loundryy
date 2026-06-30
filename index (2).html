@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>D'Sultan Laundry - Gate POS System</title>
+    <!-- Tailwind CSS v4 -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Poppins', sans-serif; }
+        @media print {
+            body * { visibility: hidden; }
+            #notaCetak, #notaCetak * { visibility: visible; }
+            #notaCetak { position: absolute; left: 0; top: 0; width: 100%; border: none !important; background: white !important; }
+        }
+    </style>
+</head>
+<body class="bg-purple-50 text-slate-800" onload="initDatabase()">
+
+    <!-- ================= 1. HALAMAN LOGIN UTAMA (FIRST GATE) ================= -->
+    <div id="gateLogin" class="fixed inset-0 bg-gradient-to-tr from-purple-950 via-purple-900 to-indigo-900 flex items-center justify-center p-4 z-50 transition-all duration-500">
+        <div class="bg-white p-8 rounded-3xl shadow-2xl w-full max-w-md border border-purple-100 text-center space-y-6 relative overflow-hidden">
+            <!-- Dekorasi Animasi Lingkaran -->
+            <div class="absolute -top-10 -right-10 w-32 h-32 bg-purple-100 rounded-full opacity-50 blur-xl"></div>
+            
+            <div class="flex flex-col items-center gap-3">
+                <div class="bg-purple-100 p-4 rounded-2xl text-purple-700 shadow-md">
+                    <svg class="w-10 h-10 animate-spin" style="animation-duration: 12s;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="14" r="6"></circle>
+                        <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <h1 class="text-2xl font-black text-purple-900 tracking-wide">D'SULTAN LAUNDRY</h1>
+                    <p class="text-xs text-slate-400 mt-1">Sila otentikasi hak akses Anda untuk masuk ke sistem</p>
+                </div>
+            </div>
+
+            <!-- Form Otentikasi -->
+            <form onsubmit="handleGateLogin(event)" class="space-y-4 text-left">
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Nama Pengguna (Username)</label>
+                    <input type="text" id="gateUsername" required placeholder="Contoh: admin atau kasir" class="w-full px-4 py-3 border border-purple-100 rounded-xl text-sm focus:outline-purple-600 bg-purple-50/50 font-medium">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-slate-600 mb-1.5 uppercase tracking-wider">Kata Sandi (Password)</label>
+                    <input type="password" id="gatePassword" required placeholder="••••••••" class="w-full px-4 py-3 border border-purple-100 rounded-xl text-sm focus:outline-purple-600 bg-purple-50/50">
+                </div>
+                <button type="submit" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-bold py-3 rounded-xl text-sm cursor-pointer shadow-lg shadow-purple-900/20 transition-all transform hover:-translate-y-0.5">
+                    Buka Akses Dashboard 🔑
+                </button>
+            </form>
+
+            <div class="pt-4 border-t border-slate-100">
+                <p class="text-[10px] text-slate-400 font-medium tracking-wide bg-slate-50 py-2 rounded-lg">
+                    💡 Petunjuk internal: <span class="text-purple-700 font-bold">admin / admin123</span> atau <span class="text-amber-600 font-bold">kasir / kasir123</span>
+                </p>
+            </div>
+        </div>
+    </div>
+
+    <!-- ================= 2. KONTEN APLIKASI UTAMA (AWALNYA TERSEMBUNYI) ================= -->
+    <div id="appContainer" class="hidden">
+        
+        <!-- TOP BAR INFO 24 JAM -->
+        <div class="bg-purple-900 text-purple-100 text-xs py-2 px-4 flex justify-between items-center font-medium shadow-sm">
+            <div class="flex items-center gap-2">
+                <span class="bg-purple-700 text-white px-2 py-0.5 rounded-full font-bold text-[10px] animate-pulse">LIVE</span>
+                <span>Melayani 24 Jam Non-Stop</span>
+            </div>
+            <div class="hidden sm:flex items-center gap-4">
+                <span>📍 Jl. Penjernihan 2 No. 1, Gunung Pangilun, Padang Utara</span>
+                <a href="https://wa.me/6287774651728" target="_blank" class="hover:underline text-amber-300 font-bold">💬 Order via WA</a>
+            </div>
+        </div>
+
+        <!-- NAVBAR UTAMA -->
+        <nav class="bg-white border-b border-purple-100 shadow-xs px-6 py-4 flex justify-between items-center sticky top-0 z-40">
+            <div class="flex items-center gap-3">
+                <div class="bg-purple-100 p-2 rounded-xl text-purple-700">
+                    <svg class="w-6 h-6 animate-spin" style="animation-duration: 8s;" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                        <circle cx="12" cy="12" r="10"></circle>
+                        <circle cx="12" cy="14" r="6"></circle>
+                        <path d="M12 2v4M12 18v4M2 12h4M18 12h4"></path>
+                    </svg>
+                </div>
+                <div>
+                    <span class="text-xl font-bold text-purple-700 tracking-wide block">D'SULTAN LAUNDRY</span>
+                    <span id="badgeAkses" class="text-[10px] bg-purple-100 text-purple-800 px-2 py-0.2 rounded-md font-bold uppercase tracking-wider">Mode Kasir</span>
+                </div>
+            </div>
+            
+            <div class="flex items-center gap-2">
+                <div id="privateNav" class="flex flex-wrap gap-1 items-center">
+                    <button onclick="switchTab('kelolaTransaksi')" class="text-xs font-semibold px-3 py-1.5 rounded-md bg-purple-700 text-white cursor-pointer">➕ Transaksi Baru</button>
+                    <button onclick="switchTab('riwayatTransaksi')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-slate-600 hover:bg-purple-50 cursor-pointer">📊 Riwayat & DB</button>
+                    <button onclick="switchTab('kelolaPelanggan')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-slate-600 hover:bg-purple-50 cursor-pointer">👥 Pelanggan</button>
+                    <button onclick="switchTab('kelolaPaket')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-slate-600 hover:bg-purple-50 cursor-pointer">📦 Paket Laundry</button>
+                    <button onclick="switchTab('trackingPage')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-slate-600 hover:bg-purple-50 cursor-pointer">🔍 Cek Nota</button>
+                    <div id="adminOnlyNav" class="hidden flex items-center gap-1">
+                        <button onclick="switchTab('kelolaUser')" class="text-xs font-semibold px-3 py-1.5 rounded-md text-slate-600 hover:bg-purple-50 cursor-pointer">⚙️ Kelola User</button>
+                    </div>
+                    <button onclick="handleLogout()" class="text-xs font-bold px-3 py-1.5 rounded-md bg-red-50 text-red-600 hover:bg-red-100 cursor-pointer ml-3">Keluar Sistem</button>
+                </div>
+            </div>
+        </nav>
+
+        <!-- ================= KONTEN HALAMAN ================= -->
+        <main class="p-4 sm:p-6 max-w-7xl w-full mx-auto">
+            
+            <!-- 1. TRACKING PESANAN TAB -->
+            <section id="trackingPage" class="tab-content hidden max-w-xl mx-auto py-8">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 text-center space-y-4">
+                    <div class="text-3xl">🔍</div>
+                    <h2 class="text-xl font-bold text-slate-700">Tracking Realtime Progres Pesanan</h2>
+                    <p class="text-xs text-slate-400">Masukkan kode nota Anda (Contoh uji coba database bawaan: <span class="font-bold text-purple-700">DSL-777</span>)</p>
+                    <div class="flex gap-2">
+                        <input type="text" id="inputResi" placeholder="Contoh: DSL-123456" class="flex-1 px-4 py-2 border border-purple-200 rounded-xl focus:ring-2 focus:ring-purple-500 text-center font-mono uppercase font-bold text-purple-700">
+                        <button onclick="lacakResi()" class="bg-purple-700 hover:bg-purple-800 text-white px-5 py-2 rounded-xl font-semibold text-xs cursor-pointer">Lacak Nota</button>
+                    </div>
+
+                    <!-- Output Tracker Visual -->
+                    <div id="hasilTracking" class="hidden border-t border-purple-50 pt-4 text-left space-y-4">
+                        <div class="bg-purple-50 p-3 rounded-xl flex justify-between text-xs">
+                            <div><p class="text-slate-400 font-medium">Nota:</p><p class="font-mono font-bold text-purple-700" id="trackNo">-</p></div>
+                            <div><p class="text-slate-400 font-medium">Pelanggan:</p><p class="font-bold text-slate-700" id="trackNama">-</p></div>
+                        </div>
+                        <div class="relative pl-6 space-y-4 before:absolute before:left-2 before:top-2 before:bottom-2 before:w-0.5 before:bg-purple-200">
+                            <div class="flex items-center gap-3 text-xs"><span class="w-4 h-4 rounded-full bg-emerald-500 ring-4 ring-emerald-100"></span> <span>Pesanan Diterima Kasir & Terdaftar di Database</span></div>
+                            <div class="flex items-center gap-3 text-xs"><span class="w-4 h-4 rounded-full bg-purple-500 ring-4 ring-purple-100 animate-pulse"></span> <span class="font-bold text-purple-700" id="trackStatusSekarang">-</span></div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 2. KELOLA TRANSAKSI TAB (INPUT POS KASIR) -->
+            <section id="kelolaTransaksi" class="tab-content space-y-6">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- FORM INPUT -->
+                    <div class="lg:col-span-1 bg-white p-6 rounded-2xl shadow-sm border border-purple-100 h-fit">
+                        <h2 class="text-base font-bold text-slate-700 mb-4 border-b border-purple-50 pb-2">Buat Transaksi Baru</h2>
+                        <form id="transaksiForm" onsubmit="prosesTransaksi(event)">
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nama Pelanggan</label>
+                                <input type="text" id="namaPelanggan" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-purple-500" placeholder="Nama...">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">No. HP / WA</label>
+                                <input type="text" id="hpPelanggan" required class="w-full px-3 py-2 border border-slate-200 rounded-lg focus:outline-purple-500" placeholder="08xxxxxxxxxx">
+                            </div>
+                            <div class="mb-3">
+                                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Pilihan Layanan Paket</label>
+                                <select id="layanan" onchange="hitungTotal()" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+                                    <option value="Cuci Komplit Sultan|10000|Kg">Cuci Komplit Sultan (Rp 10.000/Kg)</option>
+                                    <option value="Cuci Kering Eksekutif|7000|Kg">Cuci Kering Eksekutif (Rp 7.000/Kg)</option>
+                                    <option value="Setrika Royal|6000|Kg">Setrika Royal (Rp 6.000/Kg)</option>
+                                </select>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mb-3">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Parfum Premium</label>
+                                    <select id="parfum" onchange="hitungTotal()" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+                                        <option value="Sultan Signature VVIP|3000">Sultan Signature (+Rp 3.000)</option>
+                                        <option value="Sakura Luxury Fresh|1500">Sakura Luxury (+Rp 1.500)</option>
+                                        <option value="Lavender Royal Garden|0">Lavender Royal (+Rp 0)</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Durasi</label>
+                                    <select id="durasi" onchange="hitungTotal()" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+                                        <option value="Reguler|0">Reguler (+Rp 0)</option>
+                                        <option value="Ekspres|5000">Ekspres (+Rp 5.000)</option>
+                                        <option value="Kilat Sultan 24 Jam|10000">Kilat 24 Jam (+Rp 10.000)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 gap-3 mb-4">
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Jumlah / Qty</label>
+                                    <input type="number" id="berat" min="1" value="1" oninput="hitungTotal()" required class="w-full px-3 py-2 border border-slate-200 rounded-lg">
+                                </div>
+                                <div>
+                                    <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Metode Bayar</label>
+                                    <select id="pembayaran" class="w-full px-3 py-2 border border-slate-200 rounded-lg bg-white">
+                                        <option value="Tunai / Cash">Tunai / Cash</option>
+                                        <option value="QRIS Mandiri">QRIS Mandiri</option>
+                                        <option value="Transfer BCA">Transfer BCA</option>
+                                        <option value="ShopeePay / OVO">ShopeePay / OVO</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="bg-purple-900 text-white p-3 rounded-xl mb-4 flex justify-between items-center shadow-inner">
+                                <span class="text-xs font-bold uppercase text-purple-300">Kasir Total:</span>
+                                <input type="text" id="totalTeks" readonly class="bg-transparent border-none text-right font-bold text-xl text-amber-300 w-36 focus:outline-none" value="Rp 13.000">
+                            </div>
+                            <button type="submit" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-2.5 rounded-lg shadow cursor-pointer transition">Simpan Nota ke Database</button>
+                        </form>
+                    </div>
+
+                    <!-- PREVIEW NOTA & TOMBOL CETAK -->
+                    <div class="lg:col-span-2 space-y-4">
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-purple-100 flex flex-col">
+                            <div class="flex justify-between items-center border-b border-purple-50 pb-3 mb-4">
+                                <h3 class="font-bold text-slate-700">Preview Struk Cetak Terkini</h3>
+                                <button onclick="window.print()" class="bg-purple-600 hover:bg-purple-700 text-white text-xs font-bold py-2 px-4 rounded-lg shadow-md cursor-pointer flex items-center gap-1">🖨️ Print Cetak Nota Struk</button>
+                            </div>
+
+                            <!-- STRUK NOTA -->
+                            <div id="notaCetak" class="bg-amber-50/40 p-6 rounded-xl border border-dashed border-amber-300 max-w-sm mx-auto text-xs text-slate-800 shadow-xs w-full">
+                                <div class="text-center border-b border-slate-300 pb-3 mb-3">
+                                    <h3 class="text-base font-bold text-purple-800 tracking-wider">D'SULTAN LAUNDRY</h3>
+                                    <p class="text-[10px] text-slate-500 mt-0.5">Jl. Penjernihan 2 No. 1, Gunung Pangilun<br>Padang Utara, Sumatera Barat</p>
+                                    <p class="text-[10px] text-purple-700 font-bold mt-1">⚡ MELAYANI 24 JAM ⚡</p>
+                                    <p class="text-[10px] text-slate-400">Telp/WA: 087774651728</p>
+                                </div>
+                                <div class="space-y-1 text-[10px] mb-3">
+                                    <div class="flex justify-between"><span>No. Nota:</span><span id="notaNo" class="font-mono font-bold text-purple-700">-</span></div>
+                                    <div class="flex justify-between"><span>Tanggal Masuk:</span><span id="notaTgl">-</span></div>
+                                    <div class="flex justify-between"><span>Nama Pelanggan:</span><span id="notaNama" class="font-semibold">-</span></div>
+                                    <div class="flex justify-between"><span>No. HP/WA:</span><span id="notaHp">-</span></div>
+                                    <div class="flex justify-between"><span>Varian Parfum:</span><span id="notaParfum" class="italic">-</span></div>
+                                    <div class="flex justify-between"><span>Metode Bayar:</span><span id="notaBayar">-</span></div>
+                                </div>
+                                <table class="w-full text-[10px] border-t border-b border-slate-300 my-2 py-1">
+                                    <thead>
+                                        <tr class="text-left font-bold text-slate-600">
+                                            <th class="py-1">Deskripsi Paket</th>
+                                            <th class="text-center py-1">Qty</th>
+                                            <th class="text-right py-1">Total</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr class="border-t border-slate-100">
+                                            <td class="py-1.5 font-medium"><span id="notaLayanan">-</span> (<span id="notaDurasi" class="text-purple-600">-</span>)</td>
+                                            <td class="text-center py-1.5" id="notaQty">-</td>
+                                            <td class="text-right py-1.5 font-bold text-purple-700" id="notaTotal">-</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                                <div class="text-center text-[9px] text-slate-400 mt-4 italic leading-tight">
+                                    "Pakaian Bersih, Rapi, Harum Semerbak Bak Sultan"<br>Bisa pesan antar jemput pakaian lewat WA 087774651728.<br>Terima Kasih Atas Kepercayaan Anda.
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 3. TAB RIWAYAT & DATABASE LIVE -->
+            <section id="riwayatTransaksi" class="tab-content hidden bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+                <div class="flex justify-between items-center mb-4">
+                    <div>
+                        <h3 class="text-base font-bold text-slate-700">📊 Database Pusat Transaksi Masuk</h3>
+                        <p class="text-xs text-slate-400 mt-0.5">Semua transaksi tersimpan permanen di penyimpanan lokal internal komputer.</p>
+                    </div>
+                    <button onclick="clearDatabase()" class="bg-red-50 text-red-600 hover:bg-red-100 text-xs px-3 py-1.5 rounded-lg font-bold transition">Kosongkan Database DB</button>
+                </div>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-purple-900 text-white font-bold">
+                                <th class="p-3 rounded-l-lg">No. Nota</th>
+                                <th class="p-3">Tanggal</th>
+                                <th class="p-3">Nama Pelanggan</th>
+                                <th class="p-3">Layanan / Durasi</th>
+                                <th class="p-3">Qty</th>
+                                <th class="p-3">Total Tagihan</th>
+                                <th class="p-3 rounded-r-lg">Status Pengerjaan</th>
+                            </tr>
+                        </thead>
+                        <tbody id="tabelDatabaseBody" class="text-slate-600 divide-y divide-purple-50">
+                            <!-- Data dinamis masuk di sini -->
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 4. KELOLA DATA PELANGGAN TAB -->
+            <section id="kelolaPelanggan" class="tab-content hidden bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-700 mb-4">👥 Database Kelola Pelanggan D'Sultan</h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <thead>
+                            <tr class="bg-purple-900 text-white font-bold">
+                                <th class="p-3 rounded-l-lg">ID</th><th class="p-3">Nama Pelanggan</th><th class="p-3">No. Handphone</th><th class="p-3 rounded-r-lg">Alamat</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            <tr class="border-b border-purple-50"><td class="p-3 font-semibold text-purple-700">PLG-01</td><td class="p-3 font-medium">Rian Hidayat</td><td class="p-3">081267451239</td><td class="p-3">Ulak Karang, Padang</td></tr>
+                            <tr class="border-b border-purple-50"><td class="p-3 font-semibold text-purple-700">PLG-02</td><td class="p-3 font-medium">Siti Rahma</td><td class="p-3">085274119833</td><td class="p-3">Gunung Pangilun, Padang</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 5. KELOLA DATA USER TAB -->
+            <section id="kelolaUser" class="tab-content hidden bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-700 mb-4">🔐 Kelola Otoritas Data User (Hak Akses Masuk)</h3>
+                <div class="overflow-x-auto max-w-xl">
+                    <table class="w-full text-left text-xs border-collapse">
+                        <tr class="bg-purple-900 text-white font-bold"><th class="p-3 rounded-l-lg">Username</th><th class="p-3">Sandi</th><th class="p-3 rounded-r-lg">Hak Akses</th></tr>
+                        <tr class="border-b border-purple-50"><td class="p-3 font-bold text-purple-800">admin</td><td class="p-3 font-mono">admin123</td><td class="p-3"><span class="bg-purple-100 text-purple-800 font-bold px-2 py-0.5 rounded text-[10px]">OWNER FULL ACCESS</span></td></tr>
+                        <tr class="border-b border-purple-50"><td class="p-3 font-bold text-purple-800">kasir</td><td class="p-3 font-mono">kasir123</td><td class="p-3"><span class="bg-amber-100 text-amber-800 font-bold px-2 py-0.5 rounded text-[10px]">KASIR ONLY</span></td></tr>
+                    </table>
+                </div>
+            </section>
+
+            <!-- 6. KELOLA DATA PAKET TAB -->
+            <section id="kelolaPaket" class="tab-content hidden bg-white p-6 rounded-2xl border border-purple-100 shadow-sm">
+                <h3 class="text-base font-bold text-slate-700 mb-4">📦 Kelola Data Kategori Paket Laundry Premium</h3>
+                <table class="w-full text-left text-xs border-collapse">
+                    <tr class="bg-purple-900 text-white font-bold"><th class="p-3 rounded-l-lg">Kode</th><th class="p-3">Nama Layanan</th><th class="p-3">Tarif</th><th class="p-3 rounded-r-lg">Satuan</th></tr>
+                    <tr class="border-b border-purple-50"><td class="p-3 font-semibold text-purple-700">PKT-01</td><td class="p-3">Cuci Komplit Sultan</td><td class="p-3 font-bold">Rp 10.000</td><td class="p-3">Per Kg</td></tr>
+                    <tr class="border-b border-purple-50"><td class="p-3 font-semibold text-purple-700">PKT-02</td><td class="p-3">Cuci Kering Eksekutif</td><td class="p-3 font-bold">Rp 7.000</td><td class="p-3">Per Kg</td></tr>
+                </table>
+            </section>
+        </main>
+    </div>
+
+    <!-- ================= JAVASCRIPT ENGINE & LOGIC GATE ================= -->
+    <script>
+        // Mengamankan Pangkalan Data Lokal
+        function initDatabase() {
+            if (!localStorage.getItem('databaseLaundry')) {
+                const dummyDB = {
+                    "DSL-777": {
+                        nota: "DSL-777",
+                        tanggal: "2026-06-30 14:20",
+                        nama: "Budi Santoso",
+                        hp: "087774651728",
+                        layanan: "Cuci Komplit Sultan",
+                        durasi: "Kilat Sultan 24 Jam",
+                        parfum: "Sultan Signature VVIP",
+                        qty: "5 Kg",
+                        total: "Rp 63.000",
+                        pembayaran: "QRIS Mandiri",
+                        status: "Sedang Diproses Setrika Uap (24 Jam Nonstop)"
+                    }
+                };
+                localStorage.setItem('databaseLaundry', JSON.stringify(dummyDB));
+            }
+            renderTabelDatabase();
+            hitungTotal();
+        }
+
+        // Fungsi Otentikasi Pintu Utama (First Gate)
+        function handleGateLogin(event) {
+            event.preventDefault();
+            const user = document.getElementById('gateUsername').value.trim();
+            const pass = document.getElementById('gatePassword').value.trim();
+
+            if (user === 'admin' && pass === 'admin123') {
+                otorisasiMasukSistem('admin');
+            } else if (user === 'kasir' && pass === 'kasir123') {
+                otorisasiMasukSistem('kasir');
+            } else {
+                alert('Akses Ditolak! Kredensial akun salah.');
+            }
+        }
+
+        // Proses Membuka Dashboard Layar POS setelah Login Sukses
+        function otorisasiMasukSistem(role) {
+            document.getElementById('gateLogin').classList.add('hidden'); // Hilangkan gerbang login
+            document.getElementById('appContainer').classList.remove('hidden'); // Tampilkan dashboard utama
+            
+            const adminOnlyNav = document.getElementById('adminOnlyNav');
+            const badgeAkses = document.getElementById('badgeAkses');
+
+            if (role === 'admin') {
+                adminOnlyNav.classList.remove('hidden');
+                badgeAkses.className = "text-[10px] bg-purple-200 text-purple-800 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider";
+                badgeAkses.innerText = "Owner (Full Access)";
+            } else {
+                adminOnlyNav.classList.add('hidden');
+                badgeAkses.className = "text-[10px] bg-amber-200 text-amber-800 px-2 py-0.5 rounded-md font-bold uppercase tracking-wider";
+                badgeAkses.innerText = "Mode Kasir";
+            }
+            switchTab('kelolaTransaksi');
+        }
+
+        // Sistem Keluar (Kembali Menutup Aplikasi)
+        function handleLogout() {
+            if (confirm("Apakah Anda ingin menutup sesi kasir saat ini?")) {
+                document.getElementById('gateUsername').value = '';
+                document.getElementById('gatePassword').value = '';
+                document.getElementById('appContainer').classList.add('hidden');
+                document.getElementById('gateLogin').classList.remove('hidden');
+            }
+        }
+
+        // Perhitungan Komponen Biaya Secara Lengkap & Otomatis
+        function hitungTotal() {
+            const layananRaw = document.getElementById('layanan').value;
+            const durasiRaw = document.getElementById('durasi').value;
+            const parfumRaw = document.getElementById('parfum').value;
+            const berat = parseFloat(document.getElementById('berat').value) || 1;
+
+            const hargaLayanan = parseInt(layananRaw.split('|')[1]) || 0;
+            const tambahanDurasi = parseInt(durasiRaw.split('|')[1]) || 0;
+            const tambahanParfum = parseInt(parfumRaw.split('|')[1]) || 0;
+
+            const totalHarga = (hargaLayanan * berat) + tambahanDurasi + tambahanParfum;
+            
+            document.getElementById('totalTeks').value = "Rp " + totalHarga.toLocaleString('id-ID');
+            return totalHarga;
+        }
+
+        // Simpan Berkas Nota Baru Ke Database Internal Komputer
+        function prosesTransaksi(event) {
+            event.preventDefault();
+
+            const nama = document.getElementById('namaPelanggan').value;
+            const hp = document.getElementById('hpPelanggan').value;
+            const layananSplit = document.getElementById('layanan').value.split('|');
+            const durasiSplit = document.getElementById('durasi').value.split('|');
+            const parfumSplit = document.getElementById('parfum').value.split('|');
+            const qty = document.getElementById('berat').value + " " + layananSplit[2];
+            const pembayaran = document.getElementById('pembayaran').value;
+            const totalBayar = document.getElementById('totalTeks').value;
+
+            const nomorNota = "DSL-" + Math.floor(100000 + Math.random() * 900000);
+
+            const sekarang = new Date();
+            const formatTanggal = sekarang.getFullYear() + '-' + 
+                String(sekarang.getMonth() + 1).padStart(2, '0') + '-' + 
+                String(sekarang.getDate()).padStart(2, '0') + ' ' + 
+                String(sekarang.getHours()).padStart(2, '0') + ':' + 
+                String(sekarang.getMinutes()).padStart(2, '0');
+
+            const dataTransaksiBaru = {
+                nota: nomorNota,
+                tanggal: formatTanggal,
+                nama: nama,
+                hp: hp,
+                layanan: layananSplit[0],
+                durasi: durasiSplit[0],
+                parfum: parfumSplit[0],
+                qty: qty,
+                total: totalBayar,
+                pembayaran: pembayaran,
+                status: "Antrean Masuk (Sedang Dicuci Premium)"
+            };
+
+            // Masukkan Ke Storage Lokal
+            let currentDB = JSON.parse(localStorage.getItem('databaseLaundry')) || {};
+            currentDB[nomorNota] = dataTransaksiBaru;
+            localStorage.setItem('databaseLaundry', JSON.stringify(currentDB));
+
+            // Perbarui Preview Struk Kertas & Tabel Histori
+            muatKeStrukCetak(dataTransaksiBaru);
+            renderTabelDatabase();
+
+            // Pembersihan Form Input
+            document.getElementById('transaksiForm').reset();
+            hitungTotal();
+            alert(`Sukses! Nota baru dengan nomor ${nomorNota} telah terdistribusi ke database.`);
+        }
+
+        // Mentransfer Data Form ke Canvas Struk Cetak Nota Fisik
+        function muatKeStrukCetak(data) {
+            document.getElementById('notaNo').innerText = data.nota;
+            document.getElementById('notaTgl').innerText = data.tanggal;
+            document.getElementById('notaNama').innerText = data.nama;
+            document.getElementById('notaHp').innerText = data.hp;
+            document.getElementById('notaParfum').innerText = data.parfum;
+            document.getElementById('notaBayar').innerText = data.pembayaran;
+            document.getElementById('notaLayanan').innerText = data.layanan;
+            document.getElementById('notaDurasi').innerText = data.durasi;
+            document.getElementById('notaQty').innerText = data.qty;
+            document.getElementById('notaTotal').innerText = data.total;
+        }
+
+        // Sinkronisasi Tabel Log View Internal POS
+        function renderTabelDatabase() {
+            const currentDB = JSON.parse(localStorage.getItem('databaseLaundry')) || {};
+            const tbody = document.getElementById('tabelDatabaseBody');
+            tbody.innerHTML = '';
+
+            const keys = Object.keys(currentDB).reverse();
+            if(keys.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center p-4 text-slate-400">Belum ada data transaksi tersimpan di database.</td></tr>`;
+                return;
+            }
+
+            keys.forEach(key => {
+                const item = currentDB[key];
+                const tr = document.createElement('tr');
+                tr.className = "border-b border-purple-50 hover:bg-purple-50/50 transition";
+                tr.innerHTML = `
+                    <td class="p-3 font-mono font-bold text-purple-700">${item.nota}</td>
+                    <td class="p-3 text-slate-400">${item.tanggal}</td>
+                    <td class="p-3 font-medium text-slate-800">${item.nama}</td>
+                    <td class="p-3">${item.layanan} <span class="text-purple-600 font-medium">(${item.durasi})</span><br><small class="text-slate-400">Parfum: ${item.parfum}</small></td>
+                    <td class="p-3 font-mono font-semibold">${item.qty}</td>
+                    <td class="p-3 font-bold text-purple-900">${item.total} <br><small class="text-emerald-600 font-medium">${item.pembayaran}</small></td>
+                    <td class="p-3"><span class="bg-emerald-100 text-emerald-800 text-[10px] px-2 py-0.5 rounded font-bold">${item.status}</span></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        // Hapus Basis Data Total
+        function clearDatabase() {
+            if (confirm("Apakah Anda yakin ingin menghapus seluruh rekaman database? Tindakan ini tidak bisa dibatalkan.")) {
+                localStorage.removeItem('databaseLaundry');
+                initDatabase();
+            }
+        }
+
+        // Navigasi Tab
+        function switchTab(tabId) {
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.add('hidden'));
+            const targetTab = document.getElementById(tabId);
+            if (targetTab) targetTab.classList.remove('hidden');
+        }
+
+        // Modul Pelacak Validitas Nota Pesanan Pelanggan
+        function lacakResi() {
+            const inputResi = document.getElementById('inputResi').value.trim().toUpperCase();
+            const database = JSON.parse(localStorage.getItem('databaseLaundry')) || {};
+            const containerHasil = document.getElementById('hasilTracking');
+
+            if (!inputResi) {
+                alert("Sila masukkan nomor nota terlebih dahulu.");
+                return;
+            }
+
+            if (database[inputResi]) {
+                const data = database[inputResi];
+                containerHasil.classList.remove('hidden');
+                document.getElementById('trackNo').innerText = data.nota;
+                document.getElementById('trackNama').innerText = data.nama;
+                document.getElementById('trackStatusSekarang').innerText = data.status;
+            } else {
+                containerHasil.classList.add('hidden');
+                alert("Nomor nota tidak valid atau tidak terekam di database pusat.");
+            }
+        }
+    </script>
+</body>
+</html>
